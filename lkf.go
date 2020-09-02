@@ -51,9 +51,12 @@ func (c *Cryptor) Encrypt(data []byte) int {
 		// Used only 3 rounds
 		for r := uint32(1); r <= 3; r++ {
 			var x uint32 = r * delta
-			for k := 0; k < blockSize; k++ {
-				c.block[k] += calcKey(c.block[(k-1)&(blockSize-1)], c.block[(k+1)&(blockSize-1)], x, uint32(k))
+			lWord := c.block[blockSize-1]
+			for k := 0; k < blockSize-1; k++ {
+				c.block[k] += calcKey(lWord, c.block[k+1], x, uint32(k))
+				lWord = c.block[k]
 			}
+			c.block[blockSize-1] += calcKey(lWord, c.block[0], x, uint32(blockSize-1))
 		}
 		c.fromBlock(b)
 	}
@@ -69,9 +72,12 @@ func (c *Cryptor) Decrypt(data []byte) int {
 		// Used only 3 rounds
 		for r := uint32(3); r != 0; r-- {
 			var x uint32 = r * delta
-			for k := blockSize - 1; k >= 0; k-- {
-				c.block[k] -= calcKey(c.block[(k-1)&(blockSize-1)], c.block[(k+1)&(blockSize-1)], x, uint32(k))
+			rWord := c.block[0]
+			for k := blockSize - 1; k > 0; k-- {
+				c.block[k] -= calcKey(c.block[k-1], rWord, x, uint32(k))
+				rWord = c.block[k]
 			}
+			c.block[0] -= calcKey(c.block[blockSize-1], rWord, x, uint32(0))
 		}
 		c.fromBlock(b)
 	}
