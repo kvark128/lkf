@@ -49,7 +49,9 @@ func (c *Cryptor) fromBlock(data []byte) {
 	}
 }
 
-// Encrypt encrypts first len(data) / BlockSize blocks. Returns the size all encrypted blocks. If len(data) < BlockSize - returns 0.
+// Encrypt encrypts a number of blocks from src into dst.
+// Returns the number of encrypted bytes.
+// If the length of src or dst < BlockSize, it doesn't encrypt anything and returns 0.
 func (c *Cryptor) Encrypt(dst, src []byte) int {
 	numBlocks := min(len(dst), len(src)) / BlockSize
 	for i := 0; i < numBlocks; i++ {
@@ -69,7 +71,9 @@ func (c *Cryptor) Encrypt(dst, src []byte) int {
 	return numBlocks * BlockSize
 }
 
-// Decrypt decrypts first len(data) / BlockSize blocks. Returns the size all decrypted blocks. If len(data) < BlockSize - returns 0.
+// Decrypt decrypts a number of blocks from src into dst.
+// Returns the number of decrypted bytes.
+// If the length of src or dst < BlockSize, it doesn't decrypt anything and returns 0.
 func (c *Cryptor) Decrypt(dst, src []byte) int {
 	numBlocks := min(len(dst), len(src)) / BlockSize
 	for i := 0; i < numBlocks; i++ {
