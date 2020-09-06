@@ -20,6 +20,13 @@ func calcKey(lWord, rWord, x, k uint32) uint32 {
 	return n
 }
 
+func min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
 // A Cryptor represents internal buffer, used for encrypting/decrypting passed data.
 type Cryptor struct {
 	block [blockSizeInWords]uint32
@@ -43,11 +50,10 @@ func (c *Cryptor) fromBlock(data []byte) {
 }
 
 // Encrypt encrypts first len(data) / BlockSize blocks. Returns the size all encrypted blocks. If len(data) < BlockSize - returns 0.
-func (c *Cryptor) Encrypt(data []byte) int {
-	nBlocks := len(data) / BlockSize
-	for i := 0; i < nBlocks; i++ {
-		b := data[i*BlockSize:]
-		c.toBlock(b)
+func (c *Cryptor) Encrypt(dst, src []byte) int {
+	numBlocks := min(len(dst), len(src)) / BlockSize
+	for i := 0; i < numBlocks; i++ {
+		c.toBlock(src[i*BlockSize:])
 		// Used only 3 rounds
 		for r := uint32(1); r <= 3; r++ {
 			var x uint32 = r * delta
@@ -58,17 +64,16 @@ func (c *Cryptor) Encrypt(data []byte) int {
 			}
 			c.block[blockSizeInWords-1] += calcKey(lWord, c.block[0], x, uint32(blockSizeInWords-1))
 		}
-		c.fromBlock(b)
+		c.fromBlock(dst[i*BlockSize:])
 	}
-	return nBlocks * BlockSize
+	return numBlocks * BlockSize
 }
 
 // Decrypt decrypts first len(data) / BlockSize blocks. Returns the size all decrypted blocks. If len(data) < BlockSize - returns 0.
-func (c *Cryptor) Decrypt(data []byte) int {
-	nBlocks := len(data) / BlockSize
-	for i := 0; i < nBlocks; i++ {
-		b := data[i*BlockSize:]
-		c.toBlock(b)
+func (c *Cryptor) Decrypt(dst, src []byte) int {
+	numBlocks := min(len(dst), len(src)) / BlockSize
+	for i := 0; i < numBlocks; i++ {
+		c.toBlock(src[i*BlockSize:])
 		// Used only 3 rounds
 		for r := uint32(3); r != 0; r-- {
 			var x uint32 = r * delta
@@ -79,7 +84,7 @@ func (c *Cryptor) Decrypt(data []byte) int {
 			}
 			c.block[0] -= calcKey(c.block[blockSizeInWords-1], rWord, x, uint32(0))
 		}
-		c.fromBlock(b)
+		c.fromBlock(dst[i*BlockSize:])
 	}
-	return nBlocks * BlockSize
+	return numBlocks * BlockSize
 }
